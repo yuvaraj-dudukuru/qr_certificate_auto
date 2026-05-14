@@ -36,7 +36,15 @@
       "Bash(npm run *)",
       "PowerShell(Get-Item -LiteralPath \"D:\\\\fraylon\\\\projects\\\\qr_certificate_auto\\\\16\" -ErrorAction SilentlyContinue | Select-Object Name, Length; Get-ChildItem -Force \"D:\\\\fraylon\\\\projects\\\\qr_certificate_auto\\\\puppeteer-service\" | Select-Object Name, @{n='Type';e={if\\($_.PSIsContainer\\){'dir'}else{'file'}}})",
       "PowerShell(Get-Content *)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(docker version *)",
+      "Bash(docker info *)",
+      "PowerShell(docker version --format '{{.Server.Version}}' 2>&1; docker info --format '{{.OperatingSystem}}' 2>&1)",
+      "Bash(PUPPETEER_SERVICE_TOKEN=local-dev-token-min-16-chars-xx node dist/server.js)",
+      "Bash(curl -sS http://localhost:8787/health)",
+      "Bash(awk '{print $1}')",
+      "Bash(curl -sS -m 5 http://localhost:8787/health)",
+      "PowerShell(Get-NetTCPConnection *)"
     ]
   }
 }
