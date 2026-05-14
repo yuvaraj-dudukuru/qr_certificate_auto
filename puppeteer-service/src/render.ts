@@ -53,8 +53,7 @@ export async function shutdownBrowser(): Promise<void> {
 
 export interface RenderInput {
   recipientName: string;
-  startDateLabel: string;
-  endDateLabel: string;
+  bodyText: string;
   issueDateLabel: string;
   qrPngBase64: string;
 }

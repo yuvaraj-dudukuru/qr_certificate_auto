@@ -2,15 +2,18 @@
 // overlays cover the placeholder positions on top of it.
 //
 // Calibration status: ROUGH FIRST PASS. Pixel coordinates are approximate
-// guesses against a 2000x1414 canvas. Iterate in milestone 9.
+// guesses against a 2000x1414 canvas. Iterate in milestone 9 against the
+// REAL Render container output (font rendering differs from local Chromium).
 //
-// All overlays sit on top of an opaque white "wipe" rectangle so the baked
-// placeholder text on the template PNG is covered.
+// Strategy: each overlay sits on an opaque white "wipe" rectangle that
+// covers the corresponding baked placeholder. The body overlay covers the
+// ENTIRE baked paragraph (including baked program / duration / [Start Date]
+// / [End Date]) and re-renders the full body text fresh — inline date
+// substitution was tried first and rejected as too fragile.
 
 export interface CertTemplateInput {
   recipientName: string;
-  startDateLabel: string;   // e.g. "1 March 2026"
-  endDateLabel: string;     // e.g. "31 May 2026"
+  bodyText: string;         // full paragraph composed by orchestrator, e.g. "has successfully completed a 3-Month Internship in Web Development at FRAYLON TEchnologies from 1 March 2026 to 31 May 2026. ..."
   issueDateLabel: string;   // e.g. "14 May 2026"
   qrPngBase64: string;      // raw base64, no data: prefix
   templatePngBase64: string;
@@ -19,21 +22,21 @@ export interface CertTemplateInput {
 export const CANVAS_WIDTH = 2000;
 export const CANVAS_HEIGHT = 1414;
 
-// Brand teal from project memory. Used for body & issue date so overlay
-// colors visually match the baked title color.
+// Brand teal from project memory. Used for issue date so overlay colors
+// visually match the baked title color.
 const BRAND_TEAL_DARK = '#0E2A3A';
 const BRAND_TEAL = '#1E5F7E';
 
 // --------------------------------------------------------------------------
 // Overlay rectangles. Each is an (x, y, w, h) rect in canvas pixels.
-// CALIBRATE THESE against cert-template.png in milestone 9.
+// CALIBRATE THESE against the Render container in milestone 9. Width values
+// for `body` deliberately leave a small inset from the decorative border.
 // --------------------------------------------------------------------------
 const RECT = {
-  name:      { x: 200,  y: 480, w: 1600, h: 110 },
-  startDate: { x: 560,  y: 770, w: 240,  h: 36 },
-  endDate:   { x: 820,  y: 770, w: 220,  h: 36 },
-  issueDate: { x: 1340, y: 1170, w: 320, h: 50 },
-  qr:        { x: 175,  y: 1080, w: 240, h: 240 },
+  name:      { x: 200,  y: 480,  w: 1600, h: 110 },
+  body:      { x: 220,  y: 800,  w: 1560, h: 240 },
+  issueDate: { x: 1340, y: 1170, w: 320,  h: 50 },
+  qr:        { x: 175,  y: 1080, w: 240,  h: 240 },
 } as const;
 
 function escapeHtml(s: string): string {
@@ -47,8 +50,7 @@ function escapeHtml(s: string): string {
 
 export function buildCertHtml(input: CertTemplateInput): string {
   const name = escapeHtml(input.recipientName.toUpperCase());
-  const startDate = escapeHtml(input.startDateLabel);
-  const endDate = escapeHtml(input.endDateLabel);
+  const bodyText = escapeHtml(input.bodyText);
   const issueDate = escapeHtml(input.issueDateLabel);
 
   return `<!DOCTYPE html>
@@ -95,19 +97,21 @@ export function buildCertHtml(input: CertTemplateInput): string {
     font-size: 84px;
     letter-spacing: 4px;
   }
-  .start-date {
-    left: ${RECT.startDate.x}px; top: ${RECT.startDate.y}px;
-    width: ${RECT.startDate.w}px; height: ${RECT.startDate.h}px;
+  /* Body wipe + re-render of the full paragraph. Centered multi-line text,
+     so override the .overlay flex centering with explicit line-height +
+     text-align for natural paragraph wrapping. */
+  .body {
+    left: ${RECT.body.x}px; top: ${RECT.body.y}px;
+    width: ${RECT.body.w}px; height: ${RECT.body.h}px;
     font-family: 'Inter', 'Helvetica', sans-serif;
-    font-weight: 500;
-    font-size: 22px;
-  }
-  .end-date {
-    left: ${RECT.endDate.x}px; top: ${RECT.endDate.y}px;
-    width: ${RECT.endDate.w}px; height: ${RECT.endDate.h}px;
-    font-family: 'Inter', 'Helvetica', sans-serif;
-    font-weight: 500;
-    font-size: 22px;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 1.55;
+    color: ${BRAND_TEAL_DARK};
+    text-align: center;
+    /* Stack content top-aligned inside the wipe box. */
+    align-items: flex-start;
+    padding: 14px 24px;
   }
   .issue-date {
     left: ${RECT.issueDate.x}px; top: ${RECT.issueDate.y}px;
@@ -132,8 +136,7 @@ export function buildCertHtml(input: CertTemplateInput): string {
 <body>
   <div class="canvas">
     <div class="overlay name">${name}</div>
-    <div class="overlay start-date">${startDate}</div>
-    <div class="overlay end-date">${endDate}</div>
+    <div class="overlay body"><span>${bodyText}</span></div>
     <div class="overlay issue-date">${issueDate}</div>
     <div class="overlay qr"><img alt="" src="data:image/png;base64,${input.qrPngBase64}" /></div>
   </div>

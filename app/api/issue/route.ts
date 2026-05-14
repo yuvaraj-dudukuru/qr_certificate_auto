@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { composeBodyText } from '@/lib/cert-body';
 import { CERT_TYPES, formatCertNumber, type CertType } from '@/lib/cert-number';
 import { formatLongDate } from '@/lib/date-format';
 import { signCert } from '@/lib/hmac';
@@ -155,14 +156,24 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  const startLabel = formatLongDate(body.startDate);
+  const endLabel = formatLongDate(body.endDate);
+  const issueLabel = formatLongDate(issueDate);
+  const bodyText = composeBodyText({
+    type: body.type,
+    program: body.program,
+    duration: body.duration,
+    startDateLabel: startLabel,
+    endDateLabel: endLabel,
+  });
+
   let pdf: Buffer;
   try {
     pdf = await renderCertPdfViaService({
       certNumber,
       recipientName: body.recipientName,
-      startDateLabel: formatLongDate(body.startDate),
-      endDateLabel:   formatLongDate(body.endDate),
-      issueDateLabel: formatLongDate(issueDate),
+      bodyText,
+      issueDateLabel: issueLabel,
       qrPngBase64,
     });
   } catch (err) {

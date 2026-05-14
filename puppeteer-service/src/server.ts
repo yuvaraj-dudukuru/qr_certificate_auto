@@ -15,8 +15,7 @@ if (!TOKEN || TOKEN.length < 16) {
 const renderBodySchema = z.object({
   certNumber: z.string().min(1).max(64),
   recipientName: z.string().min(1).max(200),
-  startDateLabel: z.string().min(1).max(64),
-  endDateLabel: z.string().min(1).max(64),
+  bodyText: z.string().min(1).max(2_000),
   issueDateLabel: z.string().min(1).max(64),
   qrPngBase64: z.string().min(64).max(2_000_000), // bound it; ~250KB base64 is typical
 });

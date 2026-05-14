@@ -11,8 +11,7 @@ const RETRY_DELAY_MS = 2_000;
 export interface PuppeteerRenderInput {
   certNumber: string;
   recipientName: string;
-  startDateLabel: string;
-  endDateLabel: string;
+  bodyText: string;
   issueDateLabel: string;
   qrPngBase64: string;
 }

@@ -24,8 +24,8 @@ const URL = 'http://localhost:8787/pdf';
   const body = {
     certNumber: 'FRY-INT-2026-00001',
     recipientName: 'Test Intern',
-    startDateLabel: '1 March 2026',
-    endDateLabel: '31 May 2026',
+    bodyText:
+      'has successfully completed a 3-Month Internship in Web Development at FRAYLON TEchnologies from 1 March 2026 to 31 May 2026. During the internship, the candidate demonstrated dedication, technical skills, and excellent performance in web technologies and project development.',
     issueDateLabel: '14 May 2026',
     qrPngBase64,
   };
