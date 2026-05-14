@@ -27,7 +27,11 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
       "PowerShell(Get-ChildItem -Force | Where-Object { -not $_.PSIsContainer -and \\($_.Name -eq \"'\" -or $_.Name -eq \"30\" -or $_.Name -eq \"console.error\\('ERR'\" -or $_.Name -eq \"createHmac\\('sha256'\"\\) } | Select-Object Name, Length)",
       "PowerShell(Remove-Item *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(curl -sS -o /dev/null -w \"status=%{http_code}\\\\nbytes=%{size_download}\\\\n\" https://certificates.fraylontech.com/c/FRY-INT-2026-00001)",
+      "Bash(curl -sS -H \"Accept: application/json\" https://certificates.fraylontech.com/api/verify/FRY-INT-2026-00001)"
     ]
   }
 }
