@@ -24,7 +24,10 @@
       "Bash(curl -s http://localhost:3000/c/FRY-INT-2026-00002)",
       "Bash(curl -s http://localhost:3000/c/FRY-INT-2026-00003)",
       "Bash(curl -s http://localhost:3000/c/FRY-INT-2026-99999)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
+      "PowerShell(Get-ChildItem -Force | Where-Object { -not $_.PSIsContainer -and \\($_.Name -eq \"'\" -or $_.Name -eq \"30\" -or $_.Name -eq \"console.error\\('ERR'\" -or $_.Name -eq \"createHmac\\('sha256'\"\\) } | Select-Object Name, Length)",
+      "PowerShell(Remove-Item *)",
+      "Bash(git add *)"
     ]
   }
 }
