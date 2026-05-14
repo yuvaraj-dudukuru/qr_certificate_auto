@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir *)",
+      "Bash(pnpm --version)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm lint *)",
+      "Bash(powershell *)",
+      "Bash(pnpm build *)",
+      "Bash(pnpm dev *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(curl -s -i http://localhost:3000/api/verify/FRY-INT-2026-99999)",
+      "Bash(curl -s -i http://localhost:3000/api/verify/FRY-INT-2026-00001)",
+      "Bash(curl -s -i http://localhost:3000/api/verify/not-a-cert)",
+      "Bash(node *)",
+      "Bash(curl -s http://localhost:3000/api/verify/FRY-INT-2026-00001)",
+      "Bash(curl -s http://localhost:3000/api/verify/FRY-INT-2026-00002)",
+      "Bash(curl -s http://localhost:3000/api/verify/FRY-INT-2026-00003)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/api/verify/FRY-INT-2026-99999)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} \" http://localhost:3000/api/verify/FRY-INT-2026-00001)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/api/verify/FRY-INT-2026-00001)",
+      "Bash(curl -s http://localhost:3000/c/FRY-INT-2026-00002)",
+      "Bash(curl -s http://localhost:3000/c/FRY-INT-2026-00003)",
+      "Bash(curl -s http://localhost:3000/c/FRY-INT-2026-99999)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)"
+    ]
+  }
+}
