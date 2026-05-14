@@ -1,0 +1,26 @@
+{
+  "name": "fraylon-puppeteer-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-contained Puppeteer service that renders a Fraylon certificate PNG template overlaid with recipient data + QR into a PDF. Deployed separately from the Next.js app.",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "dev": "tsc -w -p tsconfig.json & node --watch dist/server.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "puppeteer": "^23.6.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.16.10",
+    "typescript": "^5.6.2"
+  }
+}

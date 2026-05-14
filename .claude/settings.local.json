@@ -31,7 +31,12 @@
       "Bash(git commit *)",
       "Bash(git push *)",
       "Bash(curl -sS -o /dev/null -w \"status=%{http_code}\\\\nbytes=%{size_download}\\\\n\" https://certificates.fraylontech.com/c/FRY-INT-2026-00001)",
-      "Bash(curl -sS -H \"Accept: application/json\" https://certificates.fraylontech.com/api/verify/FRY-INT-2026-00001)"
+      "Bash(curl -sS -H \"Accept: application/json\" https://certificates.fraylontech.com/api/verify/FRY-INT-2026-00001)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "PowerShell(Get-Item -LiteralPath \"D:\\\\fraylon\\\\projects\\\\qr_certificate_auto\\\\16\" -ErrorAction SilentlyContinue | Select-Object Name, Length; Get-ChildItem -Force \"D:\\\\fraylon\\\\projects\\\\qr_certificate_auto\\\\puppeteer-service\" | Select-Object Name, @{n='Type';e={if\\($_.PSIsContainer\\){'dir'}else{'file'}}})",
+      "PowerShell(Get-Content *)",
+      "Bash(git check-ignore *)"
     ]
   }
 }
