@@ -17,7 +17,7 @@ const QRCode = require('qrcode');
 const { renderCertPdf } = require('./dist/render');
 const { buildCertHtml, CANVAS_WIDTH, CANVAS_HEIGHT } = require('./dist/template');
 
-const CERT_NUMBER = 'FRY-INT-2026-00009';
+const CERT_NUMBER = 'FRY-INT-2026-00010';
 const TEST_INPUT = {
   recipientName: 'Test Intern',
   bodyText:

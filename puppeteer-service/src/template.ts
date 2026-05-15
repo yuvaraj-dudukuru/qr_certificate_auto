@@ -45,7 +45,12 @@ const BODY_GRAY = '#3A3A3A';
 const RECT = {
   name:      { x: 200,  y: 628,  w: 1600, h: 110 },
   body:      { x: 200,  y: 748,  w: 1600, h: 254 },
-  issueDate: { x: 1112, y: 1116, w: 319,  h: 45 },
+  // issueDate y=1101 lifts the text so its bottom edge clears the
+  // underline at y=1146. With align-items: flex-end + padding-bottom: 4,
+  // text bottom = 1101 + 45 - 4 = 1142 → 4px gap above the underline.
+  // (Previous y=1116 centered the text on the line, producing a
+  // strikethrough effect.)
+  issueDate: { x: 1112, y: 1101, w: 319,  h: 45 },
   qr:        { x: 289,  y: 1002, w: 240,  h: 240 },
 } as const;
 
