@@ -17,6 +17,7 @@ export interface CertTemplateInput {
   issueDateLabel: string;   // e.g. "14 May 2026"
   qrPngBase64: string;      // raw base64, no data: prefix
   templatePngBase64: string;
+  fontFaceCss: string;      // self-hosted @font-face blocks (data: URIs); no external network needed
 }
 
 export const CANVAS_WIDTH = 2000;
@@ -59,7 +60,8 @@ export function buildCertHtml(input: CertTemplateInput): string {
 <meta charset="utf-8" />
 <title>Fraylon Certificate</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+  /* Self-hosted fonts via data: URIs — see render.ts loadFontFaceCss(). */
+  ${input.fontFaceCss}
 
   @page { size: ${CANVAS_WIDTH}px ${CANVAS_HEIGHT}px; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -103,7 +105,7 @@ export function buildCertHtml(input: CertTemplateInput): string {
   .body {
     left: ${RECT.body.x}px; top: ${RECT.body.y}px;
     width: ${RECT.body.w}px; height: ${RECT.body.h}px;
-    font-family: 'Inter', 'Helvetica', sans-serif;
+    font-family: 'Inter', Arial, sans-serif;
     font-weight: 400;
     font-size: 24px;
     line-height: 1.55;

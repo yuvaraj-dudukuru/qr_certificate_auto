@@ -44,7 +44,11 @@
       "Bash(curl -sS http://localhost:8787/health)",
       "Bash(awk '{print $1}')",
       "Bash(curl -sS -m 5 http://localhost:8787/health)",
-      "PowerShell(Get-NetTCPConnection *)"
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(mkdir -p puppeteer-service/assets/fonts)",
+      "Bash(curl -fsSLo inter-latin-400.woff2 https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/files/inter-latin-400-normal.woff2)",
+      "Bash(curl -fsSLo playfair-latin-600.woff2 https://cdn.jsdelivr.net/npm/@fontsource/playfair-display@5.0.18/files/playfair-display-latin-600-normal.woff2)",
+      "Bash(curl -fsSLo playfair-latin-700.woff2 https://cdn.jsdelivr.net/npm/@fontsource/playfair-display@5.0.18/files/playfair-display-latin-700-normal.woff2)"
     ]
   }
 }

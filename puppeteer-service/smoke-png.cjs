@@ -7,9 +7,28 @@ const QRCode = require('qrcode');
 const puppeteer = require('puppeteer');
 const { buildCertHtml, CANVAS_WIDTH, CANVAS_HEIGHT } = require('./dist/template');
 
+async function loadFontFaceCss() {
+  const fonts = [
+    { family: 'Inter',            weight: 400, file: 'inter-latin-400.woff2' },
+    { family: 'Playfair Display', weight: 600, file: 'playfair-latin-600.woff2' },
+    { family: 'Playfair Display', weight: 700, file: 'playfair-latin-700.woff2' },
+  ];
+  const blocks = [];
+  for (const f of fonts) {
+    const buf = await fs.readFile(path.resolve(__dirname, 'assets', 'fonts', f.file));
+    const b64 = buf.toString('base64');
+    blocks.push(
+      `@font-face { font-family: '${f.family}'; font-style: normal; font-weight: ${f.weight}; ` +
+      `font-display: block; src: url(data:font/woff2;base64,${b64}) format('woff2'); }`,
+    );
+  }
+  return blocks.join('\n');
+}
+
 (async () => {
   const tplPath = path.resolve(__dirname, 'assets', 'cert-template.png');
   const templatePngBase64 = (await fs.readFile(tplPath)).toString('base64');
+  const fontFaceCss = await loadFontFaceCss();
 
   const verifyUrl = 'https://certificates.fraylontech.com/c/FRY-INT-2026-00001';
   const qrBuf = await QRCode.toBuffer(verifyUrl, {
@@ -27,6 +46,7 @@ const { buildCertHtml, CANVAS_WIDTH, CANVAS_HEIGHT } = require('./dist/template'
     issueDateLabel: '14 May 2026',
     qrPngBase64,
     templatePngBase64,
+    fontFaceCss,
   });
 
   const browser = await puppeteer.launch({
@@ -40,7 +60,7 @@ const { buildCertHtml, CANVAS_WIDTH, CANVAS_HEIGHT } = require('./dist/template'
       height: CANVAS_HEIGHT,
       deviceScaleFactor: 0.5, // halve to keep PNG under ~1MB
     });
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 15_000 });
+    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     await page.evaluate('document.fonts && document.fonts.ready');
     const out = path.resolve(__dirname, 'smoke.png');
     await page.screenshot({ path: out, type: 'png', fullPage: false });
