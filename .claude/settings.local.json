@@ -49,7 +49,12 @@
       "Bash(curl -fsSLo inter-latin-400.woff2 https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/files/inter-latin-400-normal.woff2)",
       "Bash(curl -fsSLo playfair-latin-600.woff2 https://cdn.jsdelivr.net/npm/@fontsource/playfair-display@5.0.18/files/playfair-display-latin-600-normal.woff2)",
       "Bash(curl -fsSLo playfair-latin-700.woff2 https://cdn.jsdelivr.net/npm/@fontsource/playfair-display@5.0.18/files/playfair-display-latin-700-normal.woff2)",
-      "Bash(git pull *)"
+      "Bash(git pull *)",
+      "Bash(findstr /i \"env\")",
+      "Bash(gh repo *)",
+      "PowerShell(gh repo view yuvaraj-dudukuru/qr_certificate_auto --json visibility,isPrivate,url,pushedAt)",
+      "Bash(xargs -I {} git grep -I -l -E \"\\(supabase\\\\.co|eyJhbGc|upstash\\\\.io|UPSTASH_REDIS_REST_TOKEN|SUPABASE_SERVICE_ROLE\\)\" {})",
+      "Bash(git rm *)"
     ]
   }
 }
