@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { extractAndHashIp } from '@/lib/ip';
@@ -25,9 +25,19 @@ interface PageProps {
 }
 
 export const metadata: Metadata = {
-  title: 'Verify Certificate · Fraylon',
-  description: 'Verify a certificate issued by Fraylon Technologies LLP.',
+  title: 'Certificate Verification — Fraylon Technologies',
+  description: 'Verify the authenticity of a Fraylon Technologies certificate.',
   robots: { index: false, follow: false },
+  openGraph: {
+    title: 'Certificate Verification — Fraylon Technologies',
+    description: 'Verify the authenticity of a Fraylon Technologies certificate.',
+    type: 'website',
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 function trim(value: string, limit = MAX_CERT_DISPLAY): string {
@@ -181,14 +191,16 @@ function ValidView({ data }: { data: ValidResult }) {
       <StateBadge badge={{ tone: 'valid', label: 'Certificate Verified' }}>
         <span className="sr-only">Valid</span>
       </StateBadge>
-      <h1 className="mt-6 text-center font-serif text-3xl text-fraylon-teal-dark sm:text-4xl">
+      <h1 className="mt-6 break-words text-center font-serif text-2xl text-fraylon-teal-dark sm:text-3xl">
         {data.recipientName}
       </h1>
-      <p className="mt-2 text-center text-sm text-fraylon-ink/70">
+      <p className="mt-2 text-center text-sm text-fraylon-ink/70 sm:text-base">
         successfully completed
       </p>
-      <p className="mt-1 text-center font-serif text-xl text-fraylon-ink">{data.program}</p>
-      <dl className="mt-6 w-full divide-y divide-black/5 rounded-xl bg-fraylon-paper/60 px-5 py-1 text-sm">
+      <p className="mt-1 text-center font-serif text-lg text-fraylon-ink sm:text-xl">
+        {data.program}
+      </p>
+      <dl className="mt-6 w-full divide-y divide-black/5 rounded-xl bg-fraylon-paper/60 px-4 py-1 text-sm sm:px-5">
         <Row label="Duration" value={data.duration} />
         <Row label="From" value={formatLongDate(data.startDate)} />
         <Row label="To" value={formatLongDate(data.endDate)} />
@@ -203,9 +215,11 @@ function ValidView({ data }: { data: ValidResult }) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-2.5">
-      <dt className="text-xs uppercase tracking-wider text-fraylon-ink/50">{label}</dt>
-      <dd className="text-right text-sm text-fraylon-ink">{value}</dd>
+    <div className="flex flex-col gap-0.5 py-2.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+      <dt className="text-[10px] uppercase tracking-wider text-fraylon-ink/50 sm:text-xs">
+        {label}
+      </dt>
+      <dd className="text-sm text-fraylon-ink sm:text-right">{value}</dd>
     </div>
   );
 }
@@ -374,8 +388,8 @@ export default async function VerifyPage({ params }: PageProps) {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-fraylon-paper px-4 py-10">
-      <article className="w-full max-w-md rounded-2xl border border-black/5 bg-white p-8 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-12px_rgba(15,42,58,0.18)] sm:p-10">
+    <main className="flex min-h-screen items-center justify-center bg-fraylon-paper px-4 py-6 sm:py-10">
+      <article className="w-full max-w-[600px] rounded-2xl border border-black/5 bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-12px_rgba(15,42,58,0.18)] sm:p-8">
         <header className="mb-6 flex items-center justify-between">
           <Link
             href="/"
@@ -390,7 +404,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         {children}
         <footer className="mt-8 border-t border-black/5 pt-4 text-center text-[11px] text-fraylon-ink/40">
           Verify any Fraylon certificate at{' '}
-          <span className="text-fraylon-ink/60">verify.fraylontech.com</span>
+          <span className="text-fraylon-ink/60">certificates.fraylontech.com</span>
         </footer>
       </article>
     </main>

@@ -37,17 +37,17 @@ export function DownloadButton({ certNumber }: Props) {
   }
 
   return (
-    <div className="mt-6 flex flex-col items-center gap-2">
+    <div className="mt-6 flex w-full flex-col items-center gap-2">
       <button
         type="button"
         onClick={onClick}
         disabled={loading}
-        className="rounded-md bg-fraylon-teal px-5 py-2.5 text-sm font-medium text-white transition hover:bg-fraylon-teal-dark disabled:cursor-not-allowed disabled:opacity-60"
+        className="min-h-[44px] w-full rounded-md bg-fraylon-teal px-6 py-3 text-sm font-medium text-white transition hover:bg-fraylon-teal-dark disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
         {loading ? 'Preparing download…' : 'Download Certificate'}
       </button>
       {error && (
-        <p className="text-xs text-red-600">
+        <p className="text-center text-xs text-red-600">
           {error}
         </p>
       )}

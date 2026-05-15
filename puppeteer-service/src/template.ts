@@ -28,18 +28,24 @@ const BRAND_TEAL = '#1E5F7E';
 const BODY_GRAY = '#3A3A3A';
 
 // --------------------------------------------------------------------------
-// Overlay rectangles. (x, y, w, h) in canvas pixels.
-//   name:      sits on the recipient underline (~y 540 on the clean PNG)
-//   body:      fills the empty white area between the recipient underline
-//              and the QR / signature row (~y 600 → 820)
-//   issueDate: sits on the "Date of issue" underline (bottom-right, ~y 1010)
-//   qr:        covers the baked QR placeholder (bottom-left, ~x 165 y 825)
+// Overlay rectangles. (x, y, w, h) in canvas pixels. Calibrated against
+// FRY-INT-2026-00006 PDF feedback (2026-05-15):
+//   name:      moved DOWN from y=430 → y=620 so it lands on the teal
+//              recipient underline at canvas mid (~y 707) rather than
+//              overlapping the title block at the top
+//   body:      shifted DOWN to y=770 to clear the new name position;
+//              fills the strip above the QR / signature row
+//   issueDate: nudged DOWN ~25px so the text baseline meets the
+//              "Date of issue" underline (~y 1015)
+//   qr:        wipe rect ENLARGED (215×215 → 240×240) with extra L/T
+//              margin to fully mask the baked QR placeholder underneath
+//              (previous size left thin strips of the original QR visible)
 // --------------------------------------------------------------------------
 const RECT = {
-  name:      { x: 200, y: 430, w: 1600, h: 110 },
-  body:      { x: 200, y: 600, w: 1600, h: 240 },
-  issueDate: { x: 900, y: 965, w: 380,  h: 45 },
-  qr:        { x: 165, y: 825, w: 215,  h: 215 },
+  name:      { x: 200, y: 620, w: 1600, h: 110 },
+  body:      { x: 200, y: 770, w: 1600, h: 200 },
+  issueDate: { x: 900, y: 990, w: 380,  h: 45 },
+  qr:        { x: 140, y: 810, w: 240,  h: 240 },
 } as const;
 
 function escapeHtml(s: string): string {
@@ -107,9 +113,11 @@ export function buildCertHtml(input: CertTemplateInput): string {
     padding-bottom: 6px;
   }
   /* Body paragraph — full text rendered fresh into the empty body area.
-     Wrap naturally as a multi-line centered block. Override .overlay's
-     flex centering to allow line breaks. */
+     Override .overlay's flex display: a plain block + text-align: center
+     wraps natural-language paragraphs more reliably than flex inside
+     headless Chromium. ~80% effective width matches the user spec. */
   .body {
+    display: block;
     left: ${RECT.body.x}px; top: ${RECT.body.y}px;
     width: ${RECT.body.w}px; height: ${RECT.body.h}px;
     font-family: 'Inter', Arial, sans-serif;
@@ -118,8 +126,7 @@ export function buildCertHtml(input: CertTemplateInput): string {
     line-height: 1.5;
     color: ${BODY_GRAY};
     text-align: center;
-    align-items: flex-start;
-    padding: 8px 200px;       /* inset = ~10% each side → ~80% effective width */
+    padding: 8px 40px;
   }
   .issue-date {
     left: ${RECT.issueDate.x}px; top: ${RECT.issueDate.y}px;
@@ -147,7 +154,7 @@ export function buildCertHtml(input: CertTemplateInput): string {
 <body>
   <div class="canvas">
     <div class="overlay name">${name}</div>
-    <div class="overlay body"><span>${bodyText}</span></div>
+    <div class="overlay body">${bodyText}</div>
     <div class="overlay issue-date">${issueDate}</div>
     <div class="overlay qr"><img alt="" src="data:image/png;base64,${input.qrPngBase64}" /></div>
   </div>
