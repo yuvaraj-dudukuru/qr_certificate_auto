@@ -19,10 +19,10 @@ export function composeBodyText(input: ComposeBodyTextInput): string {
     case 'INT':
       return (
         `has successfully completed a ${input.duration} in ${input.program} ` +
-        `at FRAYLON TEchnologies from ${input.startDateLabel} to ` +
+        `at Fraylon Technologies from ${input.startDateLabel} to ` +
         `${input.endDateLabel}. During the internship, the candidate ` +
         `demonstrated dedication, technical skills, and excellent performance ` +
-        `in web technologies and project development.`
+        `in ${input.program} and project development.`
       );
     case 'WRK':
     case 'CRS':

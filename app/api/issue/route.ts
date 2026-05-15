@@ -1,22 +1,14 @@
 import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { composeBodyText } from '@/lib/cert-body';
-import { CERT_TYPES, formatCertNumber, type CertType } from '@/lib/cert-number';
-import { formatLongDate } from '@/lib/date-format';
-import { signCert } from '@/lib/hmac';
-import { renderCertPdfViaService } from '@/lib/puppeteer-client';
-import { generateCertQr } from '@/lib/qr';
-import { uploadCertPdf } from '@/lib/storage';
-import { getServiceSupabase } from '@/lib/supabase/server';
+import { CERT_TYPES, type CertType } from '@/lib/cert-number';
+import { issueCertificate } from '@/lib/issue-cert';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 180; // Vercel: allow up to 3min for cold-start Puppeteer
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const CURRENT_YEAR = () => new Date().getUTCFullYear();
-const TODAY_ISO = () => new Date().toISOString().slice(0, 10);
 
 const issueBodySchema = z.object({
   type: z.enum(CERT_TYPES as readonly [CertType, ...CertType[]]),
@@ -28,9 +20,8 @@ const issueBodySchema = z.object({
   startDate: z.string().regex(ISO_DATE_RE, 'expected YYYY-MM-DD'),
   endDate: z.string().regex(ISO_DATE_RE, 'expected YYYY-MM-DD'),
   issueDate: z.string().regex(ISO_DATE_RE, 'expected YYYY-MM-DD').optional(),
+  notes: z.string().max(2000).optional().nullable(),
 });
-
-type IssueBody = z.infer<typeof issueBodySchema>;
 
 function checkBearerAuth(authHeader: string | null): { ok: true } | { ok: false; reason: string } {
   const expected = process.env.ISSUE_BEARER_TOKEN;
@@ -49,52 +40,19 @@ function checkBearerAuth(authHeader: string | null): { ok: true } | { ok: false;
   return { ok: true };
 }
 
-async function allocateCertNumber(type: CertType, year: number): Promise<string> {
-  const supabase = getServiceSupabase();
-  const { data, error } = await supabase.rpc('next_cert_seq', {
-    p_cert_type: type,
-    p_year: year,
-  });
-  if (error) {
-    throw new Error(`next_cert_seq failed for (${type}, ${year}): ${error.message}`);
-  }
-  const seq = typeof data === 'number' ? data : Number(data);
-  if (!Number.isInteger(seq) || seq < 1) {
-    throw new Error(`next_cert_seq returned non-integer: ${JSON.stringify(data)}`);
-  }
-  return formatCertNumber({ type, year, seq });
-}
-
-async function insertCertRow(
-  certNumber: string,
-  body: IssueBody,
-  issueDate: string,
-  signatureHash: string,
-): Promise<void> {
-  const supabase = getServiceSupabase();
-  const { error } = await supabase.from('certificates').insert({
-    cert_number:     certNumber,
-    cert_type:       body.type,
-    recipient_name:  body.recipientName,
-    recipient_email: body.recipientEmail ?? null,
-    program:         body.program,
-    duration:        body.duration,
-    start_date:      body.startDate,
-    end_date:        body.endDate,
-    issue_date:      issueDate,
-    signature_hash:  signatureHash,
-    status:          'active',
-  });
-  if (error) {
-    throw new Error(`insert certificate row failed for ${certNumber}: ${error.message}`);
+function stageToHttp(stage: 'allocate' | 'db_insert' | 'qr' | 'puppeteer' | 'storage'): number {
+  switch (stage) {
+    case 'puppeteer':
+    case 'storage':
+      return 502; // upstream failure, retryable
+    default:
+      return 500;
   }
 }
 
 export async function POST(request: Request): Promise<Response> {
   const auth = checkBearerAuth(request.headers.get('authorization'));
-  if (!auth.ok) {
-    return NextResponse.json({ error: auth.reason }, { status: 401 });
-  }
+  if (!auth.ok) return NextResponse.json({ error: auth.reason }, { status: 401 });
 
   let rawBody: unknown;
   try {
@@ -109,103 +67,27 @@ export async function POST(request: Request): Promise<Response> {
       { status: 400 },
     );
   }
-  const body = parsed.data;
-  const year = body.year ?? CURRENT_YEAR();
-  const issueDate = body.issueDate ?? TODAY_ISO();
 
-  let certNumber: string;
-  try {
-    certNumber = await allocateCertNumber(body.type, year);
-  } catch (err) {
+  const result = await issueCertificate(parsed.data);
+  if (!result.ok) {
     return NextResponse.json(
-      { stage: 'allocate', error: String((err as Error).message ?? err) },
-      { status: 500 },
+      { stage: result.stage, certNumber: result.certNumber, error: result.message },
+      { status: stageToHttp(result.stage) },
     );
   }
 
-  const signatureHash = signCert({
-    certNumber,
-    recipientName: body.recipientName,
-    program: body.program,
-    startDate: body.startDate,
-    endDate: body.endDate,
-    issueDate,
-  });
-
-  try {
-    await insertCertRow(certNumber, body, issueDate, signatureHash);
-  } catch (err) {
-    return NextResponse.json(
-      { stage: 'db_insert', certNumber, error: String((err as Error).message ?? err) },
-      { status: 500 },
-    );
-  }
-
-  // From here on, the cert row exists. Any subsequent failure returns an
-  // error but the row stays in place — caller can retry via a future
-  // regenerate endpoint without re-allocating a sequence number.
-
-  let qrPngBase64: string;
-  try {
-    const qr = await generateCertQr(certNumber);
-    qrPngBase64 = qr.pngBase64;
-  } catch (err) {
-    return NextResponse.json(
-      { stage: 'qr', certNumber, error: String((err as Error).message ?? err) },
-      { status: 500 },
-    );
-  }
-
-  const startLabel = formatLongDate(body.startDate);
-  const endLabel = formatLongDate(body.endDate);
-  const issueLabel = formatLongDate(issueDate);
-  const bodyText = composeBodyText({
-    type: body.type,
-    program: body.program,
-    duration: body.duration,
-    startDateLabel: startLabel,
-    endDateLabel: endLabel,
-  });
-
-  let pdf: Buffer;
-  try {
-    pdf = await renderCertPdfViaService({
-      certNumber,
-      recipientName: body.recipientName,
-      bodyText,
-      issueDateLabel: issueLabel,
-      qrPngBase64,
-    });
-  } catch (err) {
-    return NextResponse.json(
-      { stage: 'puppeteer', certNumber, error: String((err as Error).message ?? err) },
-      { status: 502 },
-    );
-  }
-
-  let upload;
-  try {
-    upload = await uploadCertPdf(certNumber, pdf);
-  } catch (err) {
-    return NextResponse.json(
-      { stage: 'storage', certNumber, error: String((err as Error).message ?? err) },
-      { status: 502 },
-    );
-  }
-
-  // Node Buffer / Uint8Array don't structurally match Next.js's BodyInit
-  // type (lib.dom narrows it weirdly), but at runtime Uint8Array IS a valid
-  // Response body. Zero-copy view over the same memory + a single cast.
-  const pdfBody = new Uint8Array(pdf.buffer, pdf.byteOffset, pdf.byteLength);
+  // Buffer doesn't satisfy BodyInit in Next.js's strict lib.dom typings;
+  // Uint8Array view is zero-copy + a single cast.
+  const pdfBody = new Uint8Array(result.pdf.buffer, result.pdf.byteOffset, result.pdf.byteLength);
   return new Response(pdfBody as unknown as BodyInit, {
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${certNumber}.pdf"`,
+      'Content-Disposition': `attachment; filename="${result.certNumber}.pdf"`,
       'Cache-Control': 'no-store',
-      'X-Cert-Number': certNumber,
-      'X-Cert-Signed-Url': upload.signedUrl,
-      'X-Cert-Signed-Url-Expires': upload.expiresAt,
+      'X-Cert-Number': result.certNumber,
+      'X-Cert-Signed-Url': result.signedUrl,
+      'X-Cert-Signed-Url-Expires': result.expiresAt,
     },
   });
 }

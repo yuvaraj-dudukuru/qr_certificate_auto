@@ -1,43 +1,45 @@
 // HTML certificate template. The PNG (cert-template.png) is the canvas;
-// overlays cover the placeholder positions on top of it.
+// overlays cover specific positions on top of it.
 //
-// Calibration status: ROUGH FIRST PASS. Pixel coordinates are approximate
-// guesses against a 2000x1414 canvas. Iterate in milestone 9 against the
-// REAL Render container output (font rendering differs from local Chromium).
+// The new clean template (post 2026-05-15 redesign) has placeholder text
+// removed — only underlines remain for recipient name and date of issue,
+// plus a baked QR placeholder square at bottom-left. So overlays no longer
+// need to white-wipe the placeholder text (it isn't there). The .qr overlay
+// is the only one with an opaque white background, to cover the baked QR.
 //
-// Strategy: each overlay sits on an opaque white "wipe" rectangle that
-// covers the corresponding baked placeholder. The body overlay covers the
-// ENTIRE baked paragraph (including baked program / duration / [Start Date]
-// / [End Date]) and re-renders the full body text fresh — inline date
-// substitution was tried first and rejected as too fragile.
+// Calibration status: FIRST PASS against the new template. Pixel positions
+// reflect rough measurements from the 2000x1414 PNG; iterate from screenshots.
 
 export interface CertTemplateInput {
   recipientName: string;
-  bodyText: string;         // full paragraph composed by orchestrator, e.g. "has successfully completed a 3-Month Internship in Web Development at FRAYLON TEchnologies from 1 March 2026 to 31 May 2026. ..."
-  issueDateLabel: string;   // e.g. "14 May 2026"
+  bodyText: string;         // full paragraph composed by orchestrator
+  issueDateLabel: string;   // e.g. "15 May 2026"
   qrPngBase64: string;      // raw base64, no data: prefix
   templatePngBase64: string;
-  fontFaceCss: string;      // self-hosted @font-face blocks (data: URIs); no external network needed
+  fontFaceCss: string;      // self-hosted @font-face blocks (data: URIs)
 }
 
 export const CANVAS_WIDTH = 2000;
 export const CANVAS_HEIGHT = 1414;
 
-// Brand teal from project memory. Used for issue date so overlay colors
-// visually match the baked title color.
+// Brand teal — matches the title color baked into the template.
 const BRAND_TEAL_DARK = '#0E2A3A';
 const BRAND_TEAL = '#1E5F7E';
+const BODY_GRAY = '#3A3A3A';
 
 // --------------------------------------------------------------------------
-// Overlay rectangles. Each is an (x, y, w, h) rect in canvas pixels.
-// CALIBRATE THESE against the Render container in milestone 9. Width values
-// for `body` deliberately leave a small inset from the decorative border.
+// Overlay rectangles. (x, y, w, h) in canvas pixels.
+//   name:      sits on the recipient underline (~y 540 on the clean PNG)
+//   body:      fills the empty white area between the recipient underline
+//              and the QR / signature row (~y 600 → 820)
+//   issueDate: sits on the "Date of issue" underline (bottom-right, ~y 1010)
+//   qr:        covers the baked QR placeholder (bottom-left, ~x 165 y 825)
 // --------------------------------------------------------------------------
 const RECT = {
-  name:      { x: 200,  y: 480,  w: 1600, h: 110 },
-  body:      { x: 220,  y: 800,  w: 1560, h: 240 },
-  issueDate: { x: 1340, y: 1170, w: 320,  h: 50 },
-  qr:        { x: 175,  y: 1080, w: 240,  h: 240 },
+  name:      { x: 200, y: 430, w: 1600, h: 110 },
+  body:      { x: 200, y: 600, w: 1600, h: 240 },
+  issueDate: { x: 900, y: 965, w: 380,  h: 45 },
+  qr:        { x: 165, y: 825, w: 215,  h: 215 },
 } as const;
 
 function escapeHtml(s: string): string {
@@ -84,49 +86,56 @@ export function buildCertHtml(input: CertTemplateInput): string {
   }
   .overlay {
     position: absolute;
-    background: #fff;            /* wipe baked placeholder beneath */
+    /* No background wipe by default — the new clean template has no baked
+       placeholder text to cover (only underlines, which we want to keep
+       visible). .qr re-enables a white background to mask the baked QR. */
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
-    color: ${BRAND_TEAL_DARK};
   }
   .name {
     left: ${RECT.name.x}px; top: ${RECT.name.y}px;
     width: ${RECT.name.w}px; height: ${RECT.name.h}px;
-    font-family: 'Playfair Display', 'Georgia', serif;
+    font-family: 'Playfair Display', Georgia, serif;
     font-weight: 700;
-    font-size: 84px;
-    letter-spacing: 4px;
+    font-size: 72px;
+    letter-spacing: 3px;
+    color: #000;
+    /* Baseline of the text sits just above the teal underline. */
+    align-items: flex-end;
+    padding-bottom: 6px;
   }
-  /* Body wipe + re-render of the full paragraph. Centered multi-line text,
-     so override the .overlay flex centering with explicit line-height +
-     text-align for natural paragraph wrapping. */
+  /* Body paragraph — full text rendered fresh into the empty body area.
+     Wrap naturally as a multi-line centered block. Override .overlay's
+     flex centering to allow line breaks. */
   .body {
     left: ${RECT.body.x}px; top: ${RECT.body.y}px;
     width: ${RECT.body.w}px; height: ${RECT.body.h}px;
     font-family: 'Inter', Arial, sans-serif;
     font-weight: 400;
-    font-size: 24px;
-    line-height: 1.55;
-    color: ${BRAND_TEAL_DARK};
+    font-size: 22px;
+    line-height: 1.5;
+    color: ${BODY_GRAY};
     text-align: center;
-    /* Stack content top-aligned inside the wipe box. */
     align-items: flex-start;
-    padding: 14px 24px;
+    padding: 8px 200px;       /* inset = ~10% each side → ~80% effective width */
   }
   .issue-date {
     left: ${RECT.issueDate.x}px; top: ${RECT.issueDate.y}px;
     width: ${RECT.issueDate.w}px; height: ${RECT.issueDate.h}px;
-    font-family: 'Playfair Display', 'Georgia', serif;
+    font-family: 'Playfair Display', Georgia, serif;
     font-weight: 600;
-    font-size: 32px;
+    font-size: 28px;
     color: ${BRAND_TEAL};
+    /* Sit just above the "Date of issue" underline. */
+    align-items: flex-end;
+    padding-bottom: 4px;
   }
   .qr {
     left: ${RECT.qr.x}px; top: ${RECT.qr.y}px;
     width: ${RECT.qr.w}px; height: ${RECT.qr.h}px;
-    background: #fff;            /* wipe placeholder QR */
+    background: #fff;        /* wipe the baked QR placeholder beneath */
     padding: 0;
   }
   .qr img {
@@ -145,3 +154,7 @@ export function buildCertHtml(input: CertTemplateInput): string {
 </body>
 </html>`;
 }
+
+// Tiny suppression to keep BRAND_TEAL_DARK in scope for future calibration
+// adjustments (e.g. if the name color shifts back to brand teal).
+void BRAND_TEAL_DARK;

@@ -15,8 +15,13 @@ describe('composeBodyText', () => {
     expect(body).toContain('Web Development');
     expect(body).toContain('1 March 2026');
     expect(body).toContain('31 May 2026');
-    // And the literal Fraylon brand casing (matches the baked template).
-    expect(body).toContain('FRAYLON TEchnologies');
+    // Proper-case Fraylon Technologies (clean template, post 2026-05-15).
+    expect(body).toContain('Fraylon Technologies');
+    expect(body).not.toContain('FRAYLON TEchnologies');
+    // Program is referenced twice (once for "in {program}", once for
+    // "performance in {program} and project development").
+    const occurrences = body.split('Web Development').length - 1;
+    expect(occurrences).toBe(2);
   });
 
   it('INT: dates appear in start-then-end order, not reversed', () => {

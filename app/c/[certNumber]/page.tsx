@@ -10,6 +10,7 @@ import {
   type ValidResult,
   type VerifyResult,
 } from '@/lib/verify-cert';
+import { DownloadButton } from './download-button';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -194,6 +195,7 @@ function ValidView({ data }: { data: ValidResult }) {
         <Row label="Date of issue" value={formatLongDate(data.issueDate)} />
       </dl>
       <p className="mt-5 text-center text-xs text-fraylon-ink/60">Issued by {data.issuedBy}</p>
+      <DownloadButton certNumber={data.certNumber} />
       <CertNumberFootline certNumber={data.certNumber} />
     </div>
   );
