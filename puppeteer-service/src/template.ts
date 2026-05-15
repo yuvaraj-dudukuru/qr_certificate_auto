@@ -29,30 +29,24 @@ const BODY_GRAY = '#3A3A3A';
 
 // --------------------------------------------------------------------------
 // Overlay rectangles. (x, y, w, h) in canvas pixels. Calibrated against
-// FRY-INT-2026-00007 PDF feedback (2026-05-15):
-//   name:      kept at y=620 — confirmed correctly on the recipient
-//              underline at canvas vertical middle
-//   body:      moved into the empty strip BETWEEN the name overlay
-//              (which extends to y=730) and the QR row (y=1032+).
-//              User suggested y=650 h=140 but that conflicts with
-//              the name box at y=620-730 — both would render in the
-//              same vertical band. Set body y=760 h=200 to sit
-//              cleanly below name with ~70px clearance above QR.
-//              overflow:hidden caps any visual bleed downward.
-//   issueDate: unchanged
-//   qr:        wipe RECT REPLACED based on programmatic measurement
-//              of the baked QR in cert-template.png. Tight QR bounds
-//              measured at x=319-498, y=1032-1211 (180x180 square).
-//              Wipe = bounds + 30px buffer per side → 240x240 at
-//              (289, 1002). Previous (x=140, y=810) was completely
-//              off-target — it covered the EMPTY area to the upper-
-//              left of the actual QR placeholder.
+// programmatic measurement of cert-template.png via measure-qr.cjs
+// (run it to re-derive these if the template changes):
+//   Recipient underline:    y=715..719 (center y=717), x=642..1388
+//   Date of issue underline: y=1145..1146 (center y=1146), x=1132..1410
+//   Baked QR placeholder:   x=319..498 y=1032..1211 (180x180)
+//
+// Each overlay's y is chosen so the rendered text baseline lands ON the
+// detected underline (allowing ~15px descender extending below baseline,
+// 6px padding-bottom on the box). x for date is centered on the
+// measured underline. QR wipe = QR bounds + 30px buffer per side.
+// Body fills the empty strip between (name-box-bottom + 10) and
+// (qr-top - 30), with overflow:hidden as a safety net.
 // --------------------------------------------------------------------------
 const RECT = {
-  name:      { x: 200, y: 620,  w: 1600, h: 110 },
-  body:      { x: 200, y: 760,  w: 1600, h: 200 },
-  issueDate: { x: 900, y: 990,  w: 380,  h: 45 },
-  qr:        { x: 289, y: 1002, w: 240,  h: 240 },
+  name:      { x: 200,  y: 628,  w: 1600, h: 110 },
+  body:      { x: 200,  y: 748,  w: 1600, h: 254 },
+  issueDate: { x: 1112, y: 1116, w: 319,  h: 45 },
+  qr:        { x: 289,  y: 1002, w: 240,  h: 240 },
 } as const;
 
 function escapeHtml(s: string): string {
