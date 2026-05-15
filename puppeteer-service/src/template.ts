@@ -29,23 +29,30 @@ const BODY_GRAY = '#3A3A3A';
 
 // --------------------------------------------------------------------------
 // Overlay rectangles. (x, y, w, h) in canvas pixels. Calibrated against
-// FRY-INT-2026-00006 PDF feedback (2026-05-15):
-//   name:      moved DOWN from y=430 → y=620 so it lands on the teal
-//              recipient underline at canvas mid (~y 707) rather than
-//              overlapping the title block at the top
-//   body:      shifted DOWN to y=770 to clear the new name position;
-//              fills the strip above the QR / signature row
-//   issueDate: nudged DOWN ~25px so the text baseline meets the
-//              "Date of issue" underline (~y 1015)
-//   qr:        wipe rect ENLARGED (215×215 → 240×240) with extra L/T
-//              margin to fully mask the baked QR placeholder underneath
-//              (previous size left thin strips of the original QR visible)
+// FRY-INT-2026-00007 PDF feedback (2026-05-15):
+//   name:      kept at y=620 — confirmed correctly on the recipient
+//              underline at canvas vertical middle
+//   body:      moved into the empty strip BETWEEN the name overlay
+//              (which extends to y=730) and the QR row (y=1032+).
+//              User suggested y=650 h=140 but that conflicts with
+//              the name box at y=620-730 — both would render in the
+//              same vertical band. Set body y=760 h=200 to sit
+//              cleanly below name with ~70px clearance above QR.
+//              overflow:hidden caps any visual bleed downward.
+//   issueDate: unchanged
+//   qr:        wipe RECT REPLACED based on programmatic measurement
+//              of the baked QR in cert-template.png. Tight QR bounds
+//              measured at x=319-498, y=1032-1211 (180x180 square).
+//              Wipe = bounds + 30px buffer per side → 240x240 at
+//              (289, 1002). Previous (x=140, y=810) was completely
+//              off-target — it covered the EMPTY area to the upper-
+//              left of the actual QR placeholder.
 // --------------------------------------------------------------------------
 const RECT = {
-  name:      { x: 200, y: 620, w: 1600, h: 110 },
-  body:      { x: 200, y: 770, w: 1600, h: 200 },
-  issueDate: { x: 900, y: 990, w: 380,  h: 45 },
-  qr:        { x: 140, y: 810, w: 240,  h: 240 },
+  name:      { x: 200, y: 620,  w: 1600, h: 110 },
+  body:      { x: 200, y: 760,  w: 1600, h: 200 },
+  issueDate: { x: 900, y: 990,  w: 380,  h: 45 },
+  qr:        { x: 289, y: 1002, w: 240,  h: 240 },
 } as const;
 
 function escapeHtml(s: string): string {
@@ -115,7 +122,9 @@ export function buildCertHtml(input: CertTemplateInput): string {
   /* Body paragraph — full text rendered fresh into the empty body area.
      Override .overlay's flex display: a plain block + text-align: center
      wraps natural-language paragraphs more reliably than flex inside
-     headless Chromium. ~80% effective width matches the user spec. */
+     headless Chromium. ~80% effective width matches the user spec.
+     overflow: hidden caps any text that would otherwise spill down into
+     the QR / signature row when font metrics vary between containers. */
   .body {
     display: block;
     left: ${RECT.body.x}px; top: ${RECT.body.y}px;
@@ -127,6 +136,7 @@ export function buildCertHtml(input: CertTemplateInput): string {
     color: ${BODY_GRAY};
     text-align: center;
     padding: 8px 40px;
+    overflow: hidden;
   }
   .issue-date {
     left: ${RECT.issueDate.x}px; top: ${RECT.issueDate.y}px;

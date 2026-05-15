@@ -42,7 +42,7 @@ async function loadFontFaceCss() {
   const html = buildCertHtml({
     recipientName: 'Test Intern',
     bodyText:
-      'has successfully completed a 3-Month Internship in Web Development at FRAYLON TEchnologies from 1 March 2026 to 31 May 2026. During the internship, the candidate demonstrated dedication, technical skills, and excellent performance in web technologies and project development.',
+      'has successfully completed a 3-Month Internship in Web Development at Fraylon Technologies from 1 March 2026 to 31 May 2026. During the internship, the candidate demonstrated dedication, technical skills, and excellent performance in Web Development and project development.',
     issueDateLabel: '14 May 2026',
     qrPngBase64,
     templatePngBase64,

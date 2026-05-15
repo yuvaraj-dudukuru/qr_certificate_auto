@@ -5,6 +5,10 @@ dist/
 *.log
 .DS_Store
 
-# Local dev smoke-test artifacts
+# Local dev smoke-test + calibration artifacts
 smoke.pdf
 smoke.png
+smoke-middle.png
+qr-area.png
+qr-zoom.png
+issued/
