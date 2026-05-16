@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type FormEvent } from 'react';
+import { useToast } from '../_components/toast';
 
 interface SuccessState {
   certNumber: string;
@@ -24,7 +25,11 @@ interface IssueIssue {
   path?: (string | number)[];
 }
 
+const INPUT_CLASS =
+  'w-full min-h-[44px] rounded-lg border border-black/10 bg-white px-3.5 py-2.5 text-sm shadow-sm outline-none transition-colors placeholder:text-fraylon-ink/40 focus-visible:border-fraylon-teal focus-visible:ring-2 focus-visible:ring-fraylon-teal/30 disabled:cursor-not-allowed disabled:opacity-60';
+
 export function IssueForm() {
+  const toast = useToast();
   const [type, setType] = useState<'INT' | 'WRK' | 'CRS'>('INT');
   const [recipientName, setRecipientName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
@@ -88,7 +93,9 @@ export function IssueForm() {
         const stageNote = data.stage && data.certNumber
           ? ` Cert row ${data.certNumber} was created but the ${data.stage} stage failed.`
           : '';
-        setError((data.error || `request failed (${res.status})`) + stageNote);
+        const msg = (data.error || `request failed (${res.status})`) + stageNote;
+        setError(msg);
+        toast.show(msg, 'error');
         return;
       }
 
@@ -107,8 +114,11 @@ export function IssueForm() {
 
       const verifyUrl = `${window.location.origin}/c/${certNumber}`;
       setSuccess({ certNumber, signedUrl, verifyUrl, pdfBlobUrl });
+      toast.show(`Issued ${certNumber}. PDF downloaded.`, 'success');
     } catch (err) {
-      setError((err as Error).message || 'unexpected error');
+      const msg = (err as Error).message || 'unexpected error';
+      setError(msg);
+      toast.show(msg, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -129,9 +139,9 @@ export function IssueForm() {
         <SuccessPanel state={success} onIssueAnother={resetForNext} />
       ) : null}
 
-      <form onSubmit={onSubmit} className="space-y-5 rounded-2xl border border-black/5 bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <form onSubmit={onSubmit} className="space-y-5 rounded-2xl border border-black/5 bg-white p-5 shadow-sm sm:p-7">
         {error && !success && (
-          <div className="rounded-md border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div role="alert" className="rounded-lg border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
             {error}
           </div>
         )}
@@ -143,7 +153,7 @@ export function IssueForm() {
             onChange={(e) => setRecipientName(e.target.value)}
             required
             maxLength={200}
-            className="w-full rounded-md border border-black/10 px-3 py-2 text-sm outline-none focus:border-fraylon-teal focus:ring-1 focus:ring-fraylon-teal"
+            className={INPUT_CLASS}
           />
         </Field>
 
@@ -153,20 +163,28 @@ export function IssueForm() {
             value={recipientEmail}
             onChange={(e) => setRecipientEmail(e.target.value)}
             maxLength={254}
-            className="w-full rounded-md border border-black/10 px-3 py-2 text-sm outline-none focus:border-fraylon-teal focus:ring-1 focus:ring-fraylon-teal"
+            className={INPUT_CLASS}
           />
         </Field>
 
         <Field label="Type" error={fieldErrors.type} required>
-          <div className="flex flex-wrap gap-4 pt-1">
+          <div className="flex flex-wrap gap-2 pt-1">
             {(['INT', 'WRK', 'CRS'] as const).map((t) => (
-              <label key={t} className="flex items-center gap-2 text-sm text-fraylon-ink">
+              <label
+                key={t}
+                className={`inline-flex min-h-[40px] cursor-pointer items-center gap-2 rounded-full border px-4 text-sm transition-colors focus-within:ring-2 focus-within:ring-fraylon-teal/40 ${
+                  type === t
+                    ? 'border-fraylon-teal bg-fraylon-teal/10 text-fraylon-teal-dark font-medium'
+                    : 'border-black/10 bg-white text-fraylon-ink/70 hover:border-fraylon-teal/40 hover:bg-fraylon-paper'
+                }`}
+              >
                 <input
                   type="radio"
                   name="type"
                   value={t}
                   checked={type === t}
                   onChange={() => setType(t)}
+                  className="sr-only"
                 />
                 {TYPE_LABELS[t]} <span className="text-fraylon-ink/40">({t})</span>
               </label>
@@ -181,7 +199,7 @@ export function IssueForm() {
             onChange={(e) => setProgram(e.target.value)}
             required
             maxLength={200}
-            className="w-full rounded-md border border-black/10 px-3 py-2 text-sm outline-none focus:border-fraylon-teal focus:ring-1 focus:ring-fraylon-teal"
+            className={INPUT_CLASS}
           />
         </Field>
 
@@ -192,7 +210,7 @@ export function IssueForm() {
             onChange={(e) => setDuration(e.target.value)}
             required
             maxLength={100}
-            className="w-full rounded-md border border-black/10 px-3 py-2 text-sm outline-none focus:border-fraylon-teal focus:ring-1 focus:ring-fraylon-teal"
+            className={INPUT_CLASS}
           />
         </Field>
 
@@ -203,7 +221,7 @@ export function IssueForm() {
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               required
-              className="w-full rounded-md border border-black/10 px-3 py-2 text-sm outline-none focus:border-fraylon-teal focus:ring-1 focus:ring-fraylon-teal"
+              className={INPUT_CLASS}
             />
           </Field>
           <Field label="End date" error={fieldErrors.endDate} required>
@@ -212,7 +230,7 @@ export function IssueForm() {
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               required
-              className="w-full rounded-md border border-black/10 px-3 py-2 text-sm outline-none focus:border-fraylon-teal focus:ring-1 focus:ring-fraylon-teal"
+              className={INPUT_CLASS}
             />
           </Field>
           <Field label="Date of issue" error={fieldErrors.issueDate}>
@@ -220,7 +238,7 @@ export function IssueForm() {
               type="date"
               value={issueDate}
               onChange={(e) => setIssueDate(e.target.value)}
-              className="w-full rounded-md border border-black/10 px-3 py-2 text-sm outline-none focus:border-fraylon-teal focus:ring-1 focus:ring-fraylon-teal"
+              className={INPUT_CLASS}
             />
           </Field>
         </div>
@@ -231,7 +249,7 @@ export function IssueForm() {
             onChange={(e) => setNotes(e.target.value)}
             maxLength={2000}
             rows={3}
-            className="w-full rounded-md border border-black/10 px-3 py-2 text-sm outline-none focus:border-fraylon-teal focus:ring-1 focus:ring-fraylon-teal"
+            className={`${INPUT_CLASS} min-h-[88px] resize-y`}
           />
         </Field>
 
@@ -239,13 +257,39 @@ export function IssueForm() {
           <button
             type="submit"
             disabled={submitting || !clientSideValid}
-            className="rounded-md bg-fraylon-teal px-5 py-2.5 text-sm font-medium text-white transition hover:bg-fraylon-teal-dark disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex w-full min-h-[48px] items-center justify-center rounded-lg bg-fraylon-teal px-5 py-3 text-sm font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-fraylon-teal-dark hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fraylon-teal focus-visible:ring-offset-2 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:shadow-sm sm:w-auto"
           >
-            {submitting ? 'Issuing… (this can take 30-60s on a cold Render container)' : 'Issue certificate'}
+            {submitting ? (
+              <>
+                <Spinner />
+                <span>Issuing… (can take 30-60s on a cold container)</span>
+              </>
+            ) : (
+              'Issue certificate'
+            )}
           </button>
         </div>
       </form>
     </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg
+      className="mr-2 h-4 w-4 animate-spin"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4" />
+      <path
+        d="M4 12a8 8 0 018-8"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
@@ -264,7 +308,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium uppercase tracking-wider text-fraylon-ink/60">
+      <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-fraylon-ink/60">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
@@ -276,17 +320,17 @@ function Field({
 
 function SuccessPanel({ state, onIssueAnother }: { state: SuccessState; onIssueAnother: () => void }) {
   return (
-    <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-6">
+    <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 sm:p-6">
       <h2 className="font-serif text-lg text-emerald-800">Issued ✓ — {state.certNumber}</h2>
       <p className="mt-1 text-sm text-emerald-700">
         PDF downloaded to your browser. The link below is valid for 7 days.
       </p>
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
         <a
           href={state.signedUrl}
           target="_blank"
           rel="noreferrer"
-          className="rounded-md bg-emerald-700 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-800"
+          className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-emerald-700 px-4 text-xs font-medium text-white transition-colors hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
         >
           Open PDF
         </a>
@@ -294,14 +338,14 @@ function SuccessPanel({ state, onIssueAnother }: { state: SuccessState; onIssueA
           href={state.verifyUrl}
           target="_blank"
           rel="noreferrer"
-          className="rounded-md border border-emerald-700 px-4 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+          className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-emerald-700 px-4 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"
         >
           Public verify page
         </a>
         <button
           type="button"
           onClick={onIssueAnother}
-          className="rounded-md px-4 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+          className="inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"
         >
           Issue another
         </button>

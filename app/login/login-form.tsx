@@ -7,6 +7,9 @@ interface Props {
   initialError?: string;
 }
 
+const INPUT_CLASS =
+  'w-full min-h-[44px] rounded-lg border border-black/10 bg-white px-3.5 py-2.5 text-sm text-fraylon-ink shadow-sm outline-none transition-colors placeholder:text-fraylon-ink/40 focus-visible:border-fraylon-teal focus-visible:ring-2 focus-visible:ring-fraylon-teal/30';
+
 export function LoginForm({ next, initialError }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,12 +45,12 @@ export function LoginForm({ next, initialError }: Props) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {error && (
-        <div className="rounded-md border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div role="alert" className="rounded-lg border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
           {error}
         </div>
       )}
       <div>
-        <label htmlFor="email" className="mb-1 block text-xs font-medium uppercase tracking-wider text-fraylon-ink/60">
+        <label htmlFor="email" className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-fraylon-ink/60">
           Email
         </label>
         <input
@@ -57,11 +60,11 @@ export function LoginForm({ next, initialError }: Props) {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-md border border-black/10 bg-white px-3 py-2 text-sm text-fraylon-ink outline-none focus:border-fraylon-teal focus:ring-1 focus:ring-fraylon-teal"
+          className={INPUT_CLASS}
         />
       </div>
       <div>
-        <label htmlFor="password" className="mb-1 block text-xs font-medium uppercase tracking-wider text-fraylon-ink/60">
+        <label htmlFor="password" className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-fraylon-ink/60">
           Password
         </label>
         <input
@@ -71,13 +74,13 @@ export function LoginForm({ next, initialError }: Props) {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-md border border-black/10 bg-white px-3 py-2 text-sm text-fraylon-ink outline-none focus:border-fraylon-teal focus:ring-1 focus:ring-fraylon-teal"
+          className={INPUT_CLASS}
         />
       </div>
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-md bg-fraylon-teal px-3 py-2.5 text-sm font-medium text-white transition hover:bg-fraylon-teal-dark disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex w-full min-h-[48px] items-center justify-center rounded-lg bg-fraylon-teal px-3 py-3 text-sm font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-fraylon-teal-dark hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fraylon-teal focus-visible:ring-offset-2 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:shadow-sm"
       >
         {submitting ? 'Signing in…' : 'Sign in'}
       </button>

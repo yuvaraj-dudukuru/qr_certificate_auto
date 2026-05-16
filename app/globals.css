@@ -5,3 +5,26 @@
 :root {
   color-scheme: light;
 }
+
+@layer base {
+  /* Visible keyboard focus ring on any interactive element that hasn't
+     opted into its own focus-visible style. Mouse clicks stay quiet. */
+  :focus-visible {
+    outline: 2px solid theme('colors.fraylon.teal');
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Respect users who prefer reduced motion: cut the lift/scale animations
+     that Tailwind doesn't disable on its own. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
