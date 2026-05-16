@@ -23,6 +23,7 @@ interface FontFile {
 // Render never has to hit the public internet at render time.
 const FONT_FILES: readonly FontFile[] = [
   { family: 'Inter',             weight: 400, file: 'inter-latin-400.woff2' },
+  { family: 'Playfair Display',  weight: 400, file: 'playfair-latin-400.woff2' },
   { family: 'Playfair Display',  weight: 600, file: 'playfair-latin-600.woff2' },
   { family: 'Playfair Display',  weight: 700, file: 'playfair-latin-700.woff2' },
 ];

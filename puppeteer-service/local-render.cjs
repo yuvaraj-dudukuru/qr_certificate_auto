@@ -17,9 +17,10 @@ const QRCode = require('qrcode');
 const { renderCertPdf } = require('./dist/render');
 const { buildCertHtml, CANVAS_WIDTH, CANVAS_HEIGHT } = require('./dist/template');
 
-const CERT_NUMBER = 'FRY-INT-2026-00010';
+const CERT_NUMBER = 'FRY-INT-2026-00038';
 const TEST_INPUT = {
-  recipientName: 'Test Intern',
+  // Title-case name (admin-typed) — sanity for the new not-uppercase path.
+  recipientName: 'Poornima Harshini',
   bodyText:
     'has successfully completed a 3-Month Internship in Web Development at Fraylon Technologies from 1 March 2026 to 31 May 2026. During the internship, the candidate demonstrated dedication, technical skills, and excellent performance in Web Development and project development.',
   issueDateLabel: '15 May 2026',
@@ -28,6 +29,7 @@ const TEST_INPUT = {
 async function loadFontFaceCss() {
   const fonts = [
     { family: 'Inter',            weight: 400, file: 'inter-latin-400.woff2' },
+    { family: 'Playfair Display', weight: 400, file: 'playfair-latin-400.woff2' },
     { family: 'Playfair Display', weight: 600, file: 'playfair-latin-600.woff2' },
     { family: 'Playfair Display', weight: 700, file: 'playfair-latin-700.woff2' },
   ];

@@ -54,7 +54,9 @@
       "Bash(gh repo *)",
       "PowerShell(gh repo view yuvaraj-dudukuru/qr_certificate_auto --json visibility,isPrivate,url,pushedAt)",
       "Bash(xargs -I {} git grep -I -l -E \"\\(supabase\\\\.co|eyJhbGc|upstash\\\\.io|UPSTASH_REDIS_REST_TOKEN|SUPABASE_SERVICE_ROLE\\)\" {})",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(git stash *)",
+      "Bash(curl -fsSL -o puppeteer-service/assets/fonts/playfair-latin-400.woff2 \"https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-400-normal.woff2\")"
     ]
   }
 }

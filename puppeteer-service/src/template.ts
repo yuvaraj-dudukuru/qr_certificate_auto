@@ -1,14 +1,26 @@
 // HTML certificate template. The PNG (cert-template.png) is the canvas;
-// overlays cover specific positions on top of it.
+// overlays sit on top of it.
 //
-// The new clean template (post 2026-05-15 redesign) has placeholder text
-// removed — only underlines remain for recipient name and date of issue,
-// plus a baked QR placeholder square at bottom-left. So overlays no longer
-// need to white-wipe the placeholder text (it isn't there). The .qr overlay
-// is the only one with an opaque white background, to cover the baked QR.
+// Template revision (2026-05-16): the source PNG was upgraded to a richer
+// design that bakes placeholder text into every overlay slot — "Candidate
+// Name", a sample 4-line body paragraph, "DD MM YYYY", "Scan Above",
+// "CEO", "Date of issue". So every overlay region now needs a WHITE WIPE
+// behind the real text to cover the baked placeholder, except QR which
+// already had one. "Scan Above" / "CEO" / "Date of issue" captions stay
+// baked-in — we only wipe the variable slots.
 //
-// Calibration status: FIRST PASS against the new template. Pixel positions
-// reflect rough measurements from the 2000x1414 PNG; iterate from screenshots.
+// Pixel positions derived programmatically from the new template via
+// measure-template-v3.cjs + zoom-{name,date}.cjs (ruled crops).
+// Re-run those if the template PNG changes.
+//
+// Canvas: 2000 x 1414.
+// Landmarks measured against the new template:
+//   "Candidate Name" placeholder: y 620..720, x ~640..1360 (h ~100)
+//   Recipient underline (teal):   y 743..747  (long horizontal line)
+//   Body paragraph (4 lines):     y 780..945, x ~390..1640
+//   Baked QR placeholder:         x 314..502, y 1002..1191
+//   "DD MM YYYY" placeholder:     y 1100..1145, x ~1130..1390
+//   Date-of-issue underline:      y 1175..1180
 
 export interface CertTemplateInput {
   recipientName: string;
@@ -22,36 +34,55 @@ export interface CertTemplateInput {
 export const CANVAS_WIDTH = 2000;
 export const CANVAS_HEIGHT = 1414;
 
-// Brand teal — matches the title color baked into the template.
+// Brand palette — the new template's date placeholder is dark navy, not
+// brand teal. Match that exactly so the overlay blends with the baked
+// "Date of issue" caption sitting underneath.
 const BRAND_TEAL_DARK = '#0E2A3A';
 const BRAND_TEAL = '#1E5F7E';
 const BODY_GRAY = '#3A3A3A';
+// Template paper color — sampled from blank regions of cert-template.png
+// (consistent ~RGB(248,245,242) across the page). Wipe blocks use this so
+// they vanish against the cream background instead of showing as bright
+// white patches.
+const PAPER_BG = '#f8f5f2';
 
 // --------------------------------------------------------------------------
-// Overlay rectangles. (x, y, w, h) in canvas pixels. Calibrated against
-// programmatic measurement of cert-template.png via measure-qr.cjs
-// (run it to re-derive these if the template changes):
-//   Recipient underline:    y=715..719 (center y=717), x=642..1388
-//   Date of issue underline: y=1145..1146 (center y=1146), x=1132..1410
-//   Baked QR placeholder:   x=319..498 y=1032..1211 (180x180)
+// Overlay rectangles. (x, y, w, h) in canvas pixels.
 //
-// Each overlay's y is chosen so the rendered text baseline lands ON the
-// detected underline (allowing ~15px descender extending below baseline,
-// 6px padding-bottom on the box). x for date is centered on the
-// measured underline. QR wipe = QR bounds + 30px buffer per side.
-// Body fills the empty strip between (name-box-bottom + 10) and
-// (qr-top - 30), with overflow:hidden as a safety net.
+// `*Wipe` rects paint a flat #fff block to cover the baked placeholder
+// text. They sit underneath the text overlay and end JUST ABOVE the
+// teal underlines so those stay visible.
+//
+// Text rects host the rendered overlay content. The `name` rect is full
+// width (200..1800) so any name length stays centered — the wipe is
+// narrower because it only needs to cover where the baked text was.
 // --------------------------------------------------------------------------
 const RECT = {
-  name:      { x: 200,  y: 628,  w: 1600, h: 110 },
-  body:      { x: 200,  y: 748,  w: 1600, h: 254 },
-  // issueDate y=1101 lifts the text so its bottom edge clears the
-  // underline at y=1146. With align-items: flex-end + padding-bottom: 4,
-  // text bottom = 1101 + 45 - 4 = 1142 → 4px gap above the underline.
-  // (Previous y=1116 centered the text on the line, producing a
-  // strikethrough effect.)
-  issueDate: { x: 1112, y: 1101, w: 319,  h: 45 },
-  qr:        { x: 289,  y: 1002, w: 240,  h: 240 },
+  // -- White wipes (cover baked placeholders) --
+  nameWipe:  { x: 440, y: 605, w: 1120, h: 130 }, // ends at y=735, under name, above underline at 743
+  bodyWipe:  { x: 380, y: 775, w: 1280, h: 175 }, // 4 body lines
+  dateWipe:  { x: 1080, y: 1085, w: 340, h: 85 }, // "DD MM YYYY" only, above underline at 1175
+  // QR wipe stays as-is (covers baked QR placeholder pattern).
+  qrWipe:    { x: 308, y: 996, w: 200, h: 201 },
+
+  // -- Text / image overlays --
+  // Name baseline lands at ~y=720 (matching baked placeholder); descenders
+  // (e.g. lowercase 'p' in "Poornima") extend toward but stay above the
+  // teal underline at y=743. With align-items: flex-end + padding-bottom:
+  // 8 and h=125, line-box bottom = 605 + 125 - 8 = 722 → baseline ≈ 700,
+  // descender bottom ≈ 720, well clear of the underline.
+  name:      { x: 200, y: 605, w: 1600, h: 125 },
+
+  // Body box is the same area as the wipe; overflow:hidden caps spillover.
+  body:      { x: 380, y: 778, w: 1280, h: 175 },
+
+  // Date overlay: line-box bottom lands just above the underline at 1175.
+  // With h=50 + padding-bottom: 5, bottom = 1120 + 50 - 5 = 1165 → 10px
+  // gap above the underline.
+  issueDate: { x: 1080, y: 1120, w: 340, h: 50 },
+
+  // QR — overlay the real QR PNG on top of the wipe.
+  qr:        { x: 314, y: 1002, w: 188, h: 189 },
 } as const;
 
 function escapeHtml(s: string): string {
@@ -64,7 +95,9 @@ function escapeHtml(s: string): string {
 }
 
 export function buildCertHtml(input: CertTemplateInput): string {
-  const name = escapeHtml(input.recipientName.toUpperCase());
+  // Preserve admin-typed casing (was .toUpperCase() before — now we want
+  // title-case as entered, e.g. "Poornima Harshini").
+  const name = escapeHtml(input.recipientName);
   const bodyText = escapeHtml(input.bodyText);
   const issueDate = escapeHtml(input.issueDateLabel);
 
@@ -96,11 +129,12 @@ export function buildCertHtml(input: CertTemplateInput): string {
     background-repeat: no-repeat;
     background-position: 0 0;
   }
+  .wipe {
+    position: absolute;
+    background: ${PAPER_BG};
+  }
   .overlay {
     position: absolute;
-    /* No background wipe by default — the new clean template has no baked
-       placeholder text to cover (only underlines, which we want to keep
-       visible). .qr re-enables a white background to mask the baked QR. */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -110,31 +144,30 @@ export function buildCertHtml(input: CertTemplateInput): string {
     left: ${RECT.name.x}px; top: ${RECT.name.y}px;
     width: ${RECT.name.w}px; height: ${RECT.name.h}px;
     font-family: 'Playfair Display', Georgia, serif;
-    font-weight: 700;
+    font-weight: 400;
     font-size: 72px;
-    letter-spacing: 3px;
     color: #000;
-    /* Baseline of the text sits just above the teal underline. */
+    /* Baseline sits above the teal underline; descenders may reach toward
+       but stay clear of it. */
     align-items: flex-end;
-    padding-bottom: 6px;
+    padding-bottom: 8px;
   }
-  /* Body paragraph — full text rendered fresh into the empty body area.
-     Override .overlay's flex display: a plain block + text-align: center
-     wraps natural-language paragraphs more reliably than flex inside
-     headless Chromium. ~80% effective width matches the user spec.
-     overflow: hidden caps any text that would otherwise spill down into
-     the QR / signature row when font metrics vary between containers. */
+  /* Body paragraph — justified, ~27px, line-height 1.6 to match the
+     reference Canva design. overflow:hidden caps any spillover into the
+     QR/signature row if a long bodyText pushes past 4 lines. */
   .body {
     display: block;
     left: ${RECT.body.x}px; top: ${RECT.body.y}px;
     width: ${RECT.body.w}px; height: ${RECT.body.h}px;
     font-family: 'Inter', Arial, sans-serif;
     font-weight: 400;
-    font-size: 22px;
-    line-height: 1.5;
+    font-size: 27px;
+    line-height: 1.6;
     color: ${BODY_GRAY};
-    text-align: center;
-    padding: 8px 40px;
+    text-align: justify;
+    /* Slight inset so the last (short) justified line doesn't crowd the
+       baked decorative border. */
+    padding: 0 4px;
     overflow: hidden;
   }
   .issue-date {
@@ -142,16 +175,18 @@ export function buildCertHtml(input: CertTemplateInput): string {
     width: ${RECT.issueDate.w}px; height: ${RECT.issueDate.h}px;
     font-family: 'Playfair Display', Georgia, serif;
     font-weight: 600;
-    font-size: 28px;
-    color: ${BRAND_TEAL};
-    /* Sit just above the "Date of issue" underline. */
+    font-size: 32px;
+    color: ${BRAND_TEAL_DARK};
     align-items: flex-end;
-    padding-bottom: 4px;
+    padding-bottom: 5px;
   }
   .qr {
     left: ${RECT.qr.x}px; top: ${RECT.qr.y}px;
     width: ${RECT.qr.w}px; height: ${RECT.qr.h}px;
-    background: #fff;        /* wipe the baked QR placeholder beneath */
+    /* The QR PNG has a white quiet zone, so we keep a white background
+       behind it for the actual barcode area. The wipe block underneath
+       covers the baked placeholder pattern; QR image then covers the wipe. */
+    background: #fff;
     padding: 0;
   }
   .qr img {
@@ -162,6 +197,10 @@ export function buildCertHtml(input: CertTemplateInput): string {
 </head>
 <body>
   <div class="canvas">
+    <div class="wipe" style="left:${RECT.nameWipe.x}px;top:${RECT.nameWipe.y}px;width:${RECT.nameWipe.w}px;height:${RECT.nameWipe.h}px"></div>
+    <div class="wipe" style="left:${RECT.bodyWipe.x}px;top:${RECT.bodyWipe.y}px;width:${RECT.bodyWipe.w}px;height:${RECT.bodyWipe.h}px"></div>
+    <div class="wipe" style="left:${RECT.dateWipe.x}px;top:${RECT.dateWipe.y}px;width:${RECT.dateWipe.w}px;height:${RECT.dateWipe.h}px"></div>
+    <div class="wipe" style="left:${RECT.qrWipe.x}px;top:${RECT.qrWipe.y}px;width:${RECT.qrWipe.w}px;height:${RECT.qrWipe.h}px"></div>
     <div class="overlay name">${name}</div>
     <div class="overlay body">${bodyText}</div>
     <div class="overlay issue-date">${issueDate}</div>
@@ -171,6 +210,5 @@ export function buildCertHtml(input: CertTemplateInput): string {
 </html>`;
 }
 
-// Tiny suppression to keep BRAND_TEAL_DARK in scope for future calibration
-// adjustments (e.g. if the name color shifts back to brand teal).
-void BRAND_TEAL_DARK;
+// Keep BRAND_TEAL in scope for potential future re-tinting of overlays.
+void BRAND_TEAL;
